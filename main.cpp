@@ -25,237 +25,66 @@
 //3. Избегать дублирования кода.
 
 ////////////////////////////////////////////////////////////////////////////////////
+struct Application {
 
-struct IShape {
-    virtual void create() = 0;
-    virtual void erase() = 0;
-    virtual ~IShape() = default;
 };
 
-namespace FlatShapes{
-    struct Circle : IShape{
-        void create() override{
-            std::cout << "Draw 2D Circle" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase 2D Circle" << std::endl;
-        }
-    };
-    struct Rectangle : IShape{
-        void create() override{
-            std::cout << "Draw 2D Rectangle" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase 2D Rectangle" << std::endl;
-        }
-    };
-    struct Triangle : IShape{
-        void create() override{
-            std::cout << "Draw 2D Triangle" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase 2D Triangle" << std::endl;
-        }
-    };
-    struct Null : IShape{
-        void create() override{
-            std::cout << "Draw dummy" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase dummy" << std::endl;
-        }
-    };
-}
+struct Editor {
 
-namespace VolumeShapes{
-    struct Circle : IShape{
-        void create() override{
-            std::cout << "Draw 3D Circle" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase 3D Circle" << std::endl;
-        }
-    };
-    struct Rectangle : IShape{
-        void create() override{
-            std::cout << "Draw 3D Rectangle" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase 3D Rectangle" << std::endl;
-        }
-    };
-    struct Triangle : IShape{
-        void create() override{
-            std::cout << "Draw 3D Triangle" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase 3D Triangle" << std::endl;
-        }
-    };
-    struct Null : IShape{
-        void create() override{
-            std::cout << "Draw dummy" << std::endl;
-        }
-        void erase() override{
-            std::cout << "Erase dummy" << std::endl;
-        }
-    };
-}
-
-
-enum class ShapeType{
-    Circle,
-    Triangle,
-    Rectangle,
-    Null
 };
-
-struct IShapeCreator{
-    virtual std::unique_ptr<IShape> create(ShapeType type) = 0;
-};
-
-struct Shape2DCreator : IShapeCreator {
-    virtual std::unique_ptr<IShape> create(ShapeType type) override{
-        std::unique_ptr<IShape> shape;
-        switch(type) {
-            case ShapeType::Circle:
-                return std::make_unique<FlatShapes::Circle>();
-            case ShapeType::Triangle:
-                return std::make_unique<FlatShapes::Triangle>();
-            case ShapeType::Rectangle:
-                return std::make_unique<FlatShapes::Rectangle>();
-        }
-        return std::make_unique<FlatShapes::Null>();
-    }
-};
-
-struct Shape3DCreator : IShapeCreator {
-    virtual std::unique_ptr<IShape> create(ShapeType type) override{
-        switch(type) {
-            case ShapeType::Circle:
-                return std::make_unique<VolumeShapes::Circle>();
-            case ShapeType::Triangle:
-                return std::make_unique<VolumeShapes::Triangle>();
-            case ShapeType::Rectangle:
-                return std::make_unique<VolumeShapes::Rectangle>();
-        }
-        return std::make_unique<VolumeShapes::Null>();
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////
-
-enum class DocumentType{
-    Xml, Json
-};
-
-struct IDocument{
-    std::vector<std::unique_ptr<IShape>> shapes;
-    std::string path_;
-
-    virtual void open(const std::string& path) = 0;
-    virtual void save() = 0;
-    virtual void saveAs(const std::string& path) = 0;
-//    virtual void importFrom(const std::string& path) = 0;
-//    virtual void exportTo(const std::string& path) = 0;
-};
-
-struct XMLDocument : IDocument{
-
-    void open(const std::string& path) override{
-        path_ = path;
-
-        /* parse file to objects */
-
-    }
-
-    void save() override{
-    }
-
-    void saveAs(const std::string& path) override{
-
-    }
-};
-
-struct JSONDocument : IDocument{
-    void open(const std::string& path) override{
-        path_ = path;
-
-        /* parse file to objects */
-
-    }
-
-    void save() override{
-    }
-
-    void saveAs(const std::string& path) override{
-
-    }
-};
-
-struct DocumentCreator{
-    static std::unique_ptr<IDocument> create(DocumentType type) {
-        switch(type) {
-            case DocumentType::Json:
-                return std::make_unique<JSONDocument>();
-            case DocumentType::Xml:
-                return std::make_unique<XMLDocument>();
-        }
-    }
-};
-
 
 struct Command {
     virtual void call() = 0;
     virtual void undo() = 0;
 };
 
+enum class ShapeType{
+    A, B
+};
 
-struct CreateShape : Command {
-    enum Action{ create, erase } _action;
-    std::shared_ptr<IShape> _shape;
-
-    CreateShape(IShape* shape, Action action) : _shape(shape), _action(action){
-
-    }
-    void call() override{
-        switch(_action){
-            case create:
-                _shape->create();
-                break;
-            case erase:
-                _shape->erase();
-                break;
-        }
-    }
-    void undo() override{
-        switch(_action){
-            case create:
-                _shape->erase();
-                break;
-            case erase:
-                _shape->create();
-                break;
-        }
+struct CreateShape : Command{
+    CreateShape(IShape* shape) {
     }
 };
 
-struct CoxmmandInterpreter{
-    std::vector<Command> _commands;
+struct MoveShape : Command{
+    int _x, _y;
+    MoveShape(IShape* shape, int x, int y) : _x(x), _y(y) {
+
+    }
 };
 
-struct Editor {
-    std::unique_ptr<IDocument> createDocument(DocumentType type) {
-        switch(type) {
-            case DocumentType::Xml:
-                return std::make_unique<XMLDocument>();
-            case DocumentType::Json:
-                return std::make_unique<JSONDocument>();
-        }
+struct ShapeCreator {
+    std::unique_ptr<Command> create(ShapeType type);
+};
+
+struct DocumentView {
+    std::vector<Shapes> _shapes;
+    void redraw();
+};
+
+struct Document {
+    std::string _path;
+    std::string _data;
+    std::vector<Command> _command_queue;
+
+    std::string getData(){
+        return _data;
     }
+};
+
+struct Converter {
+
 };
 
 int main() {
+    app.exec();
 
+    Editor editor();
+    editor.create();
+    std::string path;
+    IDocument doc = editor.import(path);
+    editor.export(path);
+    editor.create(ShapeType);
     return 0;
 }
