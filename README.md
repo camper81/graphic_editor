@@ -16,3 +16,12 @@ ____
 2. Помнить про принцип единственности ответственности, разделить код на логические
 модули (классы, функции).
 3. Избегать дублирования кода.
+```mermaid
+classDiagram
+class Document {
+    +String path
+    +BigDecimal balance
+    +createShape(amount)
+    +withdrawl(amount)
+}
+```
