@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <vector>
+#include <list>
 //Спроектировать простейший графический векторный редактор. Подготовить макеты классов,
 //отражающих структуру будущего проекта.
 //Функционал для макетирования следующий:
@@ -29,39 +29,179 @@ enum COLOR{
     RED, GREEN, BLUE
 };
 
-struct Point{
+enum WIDGET_TYPE {
+    RECTANGLE, SQUARE, TRIANGLE, CIRCLE
+};
+
+struct Point {
     double x, y;
 };
 
-struct Size{
+struct Size {
     double w, h;
 };
 
-class Widget{
+class View;
+
+class Widget {
+protected:
     Point _pos;
     Size  _size;
     COLOR _color;
+    std::vector<Widget*> _child_wgts;
 public:
-    void resize(int w, int h);
-    void changePosition(double x, double y);
-    void changePosition(Point point);
-    void changeSize(double w, double h);
-    void changeSize(Size sz);
-    void changeColor(COLOR col);
-    virtual void show() = 0;
+    void move(double offset_x, double offset_y) {
+        _pos.x += offset_x;
+        _pos.y += offset_y;
+        for(auto& wgt: _child_wgts) {
+            wgt->move(offset_x, offset_y);
+        }
+    }
+    void move(Point& point) {
+        auto offset_x = point.x - _pos.x;
+        auto offset_y = point.x - _pos.y;
+        _pos = point;
+        for(auto& wgt: _child_wgts) {
+            wgt->move(offset_x, offset_y);
+        }
+    }
+    void resize(double offset_w, double offset_h) {
+        _size.w += offset_w;
+        _size.h += offset_h;
+        for(auto& wgt: _child_wgts) {
+            wgt->move(offset_w, offset_h);
+        }
+    }
+    void resize(Size sz) {
+        auto offset_w = sz.w - _size.w;
+        auto offset_h = sz.h - _size.h;
+        _size = sz;
+        for(auto& wgt: _child_wgts) {
+            wgt->move(offset_w, offset_h);
+        }
+    }
+    void changeColor(COLOR col) {
+        _color = col;
+    }
+
+    virtual void draw() = 0;
+};
+
+class Circle: public Widget{
+public:
+    void draw() override{
+        std::cout << "Circle draw" << std::endl;
+    }
+};
+
+class Square: public Widget{
+public:
+    void draw() override{
+        std::cout << "Square draw" << std::endl;
+    }
+};
+
+class Triangle: public Widget{
+public:
+    void draw() override{
+        std::cout << "Triangle draw" << std::endl;
+    }
+};
+
+class Rectangle: public Widget{
+public:
+    void draw() override{
+        std::cout << "Rectangle draw" << std::endl;
+    }
 };
 
 class View{
-    std::vector<Widget*>
+    Size _size;
+    std::list<Widget*> _widgets;
+public:
+    void handle(){
+        redraw();
+    }
+    void addWidget(Widget* wgt) {
+        _widgets.push_back(wgt);
+    }
+    void removeWidget(Widget* wgt) {
+        auto it = std::find(_widgets.begin(), _widgets.end(),wgt);
+        if(it != _widgets.end())
+            _widgets.erase(it);
+    }
+    void redraw() const {
+        for(auto& wgt: _widgets){
+            wgt->draw();
+        }
+    }
+};
+
+class WidgetBuilder{
+public:
+    static Widget* create(WIDGET_TYPE type) {
+        switch(type) {
+            case WIDGET_TYPE::CIRCLE:
+                return new Circle();
+            case WIDGET_TYPE::RECTANGLE:
+                return new Rectangle();
+            case WIDGET_TYPE::SQUARE:
+                return new Square;
+            case WIDGET_TYPE::TRIANGLE:
+                return new Triangle;
+        }
+        return nullptr;
+    }
 };
 
 ///////////////////////MODEL////////////////////////////////////////////////////////
 
+class Document;
 // Command
 class Command{
 public:
-    virtual void undo() = 0;
-    virtual void redo() = 0;
+    virtual void call(Document*) = 0;
+    virtual void undo(Document*) = 0;
+};
+
+class WidgetModel{
+
+};
+
+class Document{
+public:
+    Document(const std::string& name) : _name(name) {}
+
+    void addWidget(Widget* wgt) {
+        _widgets.push_back(wgt);
+        _view->addWidget(wgt);
+
+    }
+    void removeWidget(Widget*);
+
+    void moveWidget(Widget*);
+
+    void addCommand(Command* command) {
+        command->call(this);
+    }
+    void notify();
+private:
+    View* _view;
+    std::string _name;
+    std::vector<Widget*> _widgets;
+    std::vector<Command*> _commands;
+};
+
+class CreateWidget : public Command{
+    Widget* _wgt;
+public:
+    CreateWidget(Widget*) {};
+    virtual void call(Document* doc) override {
+        doc->addWidget(_wgt);
+    }
+    virtual void undo(Document* doc) override {
+        doc->removeWidget(_wgt);
+    }
 };
 
 class MoveWidget : public Command{
@@ -69,68 +209,76 @@ class MoveWidget : public Command{
     Point _pos;
 public:
     MoveWidget(Widget*, Point) {};
-    virtual void undo();
-    virtual void redo();
+    virtual void call(Document*) override;
+    virtual void undo(Document*) override;
 };
 
-class resizeWidget : public Command{
+class ResizeWidget : public Command{
     Widget* _wgt;
     Size _sz;
 public:
-    resizeWidget(Widget*, Size) {};
-    virtual void undo();
-    virtual void redo();
+    ResizeWidget(Widget*, Size) {};
+    virtual void call(Document*) override;
+    virtual void undo(Document*) override;
 };
 
-class changeColorWidget : public Command{
+class ChangeColorWidget : public Command{
     Widget* _wgt;
     COLOR _col;
 public:
-    changeColorWidget(Widget*, COLOR) {};
-    virtual void undo();
-    virtual void redo();
+    ChangeColorWidget(Widget*, COLOR) {};
+    virtual void call(Document* doc) override {
+
+    }
+    virtual void undo(Document*) override;
 };
 
-class createWidget : public Command{
+
+
+class RemoveWidget : public Command{
     Widget* _wgt;
 public:
-    createWidget(Widget*) {};
-    virtual void undo();
-    virtual void redo();
+    RemoveWidget(Widget*) {};
+    virtual void call(Document*) override;
+    virtual void undo(Document*) override;
 };
 // ~Command
 
-class Document{
-public:
-    Document(const std::string& name) : _name(name) {}
-    void addWidget(Widget*);
-    void removeWidget(Widget*);
 
-    void addCommand(Command*);
-    void notify();
-private:
-    std::string _name;
-    std::vector<Widget*> _widgets;
-    std::vector<Command*> _commands;
-};
 
 ///////////////////////CONTROLLER///////////////////////////////////////////////////
 /* CREATE */
 class Editor{
+    Editor();
+    Editor(const Editor&) = delete;
+    Editor(const Editor&&) = delete;
+    void operator=(Editor&) = delete;
+    void operator=(Editor&&) = delete;
 public:
-    Document* createDocument(const std::string& );
-    void importDocument();
-    void exportDocument();
+    static Editor* getInstance(){
+        return &_instance;
+    }
+    Document* createDocument(const std::string& name) {
+        _docs.push_back(new Document(name));
+    }
 
-    void createWidget(WIDGET_TYPE);
+    void importDocument(Document*);
+    void exportDocument(Document*);
 private:
-    std::vector<Document> _docs;
+    std::vector<Document*> _docs;
+    static Editor _instance;
 };
 
 
 int main() {
-    Editor editor;
-    auto document = editor.createDocument("doc.ge");
-
+    Editor* editor = Editor::getInstance();
+    auto document = editor->createDocument("doc.ge");
+    auto widget = WidgetBuilder::create(WIDGET_TYPE::TRIANGLE);
+    document->addCommand(new CreateWidget(widget));
+    document->addCommand(new MoveWidget(widget, {.x = 10,.y = 10}));
+    document->addCommand(new ResizeWidget(widget, {.w = 10,.h = 10}));
+    document->addCommand(new ChangeColorWidget(widget, COLOR::RED));
+    document->addCommand(new RemoveWidget(widget));
+//    document->addCommand(new WidgetBuilder::(WIDGET_TYPE::TRIANGLE));
     return 0;
 }
