@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-
+#include <vector>
 //Спроектировать простейший графический векторный редактор. Подготовить макеты классов,
 //отражающих структуру будущего проекта.
 //Функционал для макетирования следующий:
@@ -24,67 +24,113 @@
 //модули (классы, функции).
 //3. Избегать дублирования кода.
 
-////////////////////////////////////////////////////////////////////////////////////
-struct Application {
-
+///////////////////////VIEW/////////////////////////////////////////////////////////
+enum COLOR{
+    RED, GREEN, BLUE
 };
 
-struct Editor {
-
+struct Point{
+    double x, y;
 };
 
-struct Command {
-    virtual void call() = 0;
+struct Size{
+    double w, h;
+};
+
+class Widget{
+    Point _pos;
+    Size  _size;
+    COLOR _color;
+public:
+    void resize(int w, int h);
+    void changePosition(double x, double y);
+    void changePosition(Point point);
+    void changeSize(double w, double h);
+    void changeSize(Size sz);
+    void changeColor(COLOR col);
+    virtual void show() = 0;
+};
+
+class View{
+    std::vector<Widget*>
+};
+
+///////////////////////MODEL////////////////////////////////////////////////////////
+
+// Command
+class Command{
+public:
     virtual void undo() = 0;
+    virtual void redo() = 0;
 };
 
-enum class ShapeType{
-    A, B
+class MoveWidget : public Command{
+    Widget* _wgt;
+    Point _pos;
+public:
+    MoveWidget(Widget*, Point) {};
+    virtual void undo();
+    virtual void redo();
 };
 
-struct CreateShape : Command{
-    CreateShape(IShape* shape) {
-    }
+class resizeWidget : public Command{
+    Widget* _wgt;
+    Size _sz;
+public:
+    resizeWidget(Widget*, Size) {};
+    virtual void undo();
+    virtual void redo();
 };
 
-struct MoveShape : Command{
-    int _x, _y;
-    MoveShape(IShape* shape, int x, int y) : _x(x), _y(y) {
-
-    }
+class changeColorWidget : public Command{
+    Widget* _wgt;
+    COLOR _col;
+public:
+    changeColorWidget(Widget*, COLOR) {};
+    virtual void undo();
+    virtual void redo();
 };
 
-struct ShapeCreator {
-    std::unique_ptr<Command> create(ShapeType type);
+class createWidget : public Command{
+    Widget* _wgt;
+public:
+    createWidget(Widget*) {};
+    virtual void undo();
+    virtual void redo();
+};
+// ~Command
+
+class Document{
+public:
+    Document(const std::string& name) : _name(name) {}
+    void addWidget(Widget*);
+    void removeWidget(Widget*);
+
+    void addCommand(Command*);
+    void notify();
+private:
+    std::string _name;
+    std::vector<Widget*> _widgets;
+    std::vector<Command*> _commands;
 };
 
-struct DocumentView {
-    std::vector<Shapes> _shapes;
-    void redraw();
+///////////////////////CONTROLLER///////////////////////////////////////////////////
+/* CREATE */
+class Editor{
+public:
+    Document* createDocument(const std::string& );
+    void importDocument();
+    void exportDocument();
+
+    void createWidget(WIDGET_TYPE);
+private:
+    std::vector<Document> _docs;
 };
 
-struct Document {
-    std::string _path;
-    std::string _data;
-    std::vector<Command> _command_queue;
-
-    std::string getData(){
-        return _data;
-    }
-};
-
-struct Converter {
-
-};
 
 int main() {
-    app.exec();
+    Editor editor;
+    auto document = editor.createDocument("doc.ge");
 
-    Editor editor();
-    editor.create();
-    std::string path;
-    IDocument doc = editor.import(path);
-    editor.export(path);
-    editor.create(ShapeType);
     return 0;
 }
