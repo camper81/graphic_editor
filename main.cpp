@@ -258,39 +258,40 @@ class Document;
 // Command
 class Command{
 protected:
-    WidgetModel* _wgt;
+    std::shared_ptr<WidgetModel> _wgt;
 public:
-    Command(WidgetModel* wgt) : _wgt(wgt) {}
+    explicit Command(std::shared_ptr<WidgetModel>& wgt) : _wgt(wgt) {}
     virtual void call(Document*) = 0;
     virtual void undo(Document*) = 0;
 };
 
 class Document {
 public:
-    Document(const std::string& name) : _name(name) {}
+    explicit Document(const std::string& name) : _name(name) {}
 
-    void addWidget(WidgetModel* wgt) {
+    void addWidget(std::shared_ptr<WidgetModel> wgt) {
         _widgets.push_back(wgt);
         wgt->addObserver(_view);
         wgt->notify(*wgt, CHANGE_TYPE::CREATE);
     }
-    void removeWidget(WidgetModel* wgt) {
+    void removeWidget(std::shared_ptr<WidgetModel> wgt) {
         _widgets.erase(std::remove(_widgets.begin(), _widgets.end(), wgt), _widgets.end());
     }
 
-    void addCommand(Command* command) {
+    void addCommand(std::shared_ptr<Command> command) {
+        _commands.push_back(command);
         command->call(this);
     }
 private:
     View _view;
     std::string _name;
-    std::vector<WidgetModel*> _widgets;
-    std::vector<Command*> _commands;
+    std::vector<std::shared_ptr<WidgetModel>> _widgets;
+    std::vector<std::shared_ptr<Command>> _commands;
 };
 
 class CreateWidget : public Command{
 public:
-    CreateWidget(WidgetModel* wgt) : Command(wgt) {};
+    CreateWidget(std::shared_ptr<WidgetModel> wgt) : Command(wgt) {};
     virtual void call(Document* doc) override {
         doc->addWidget(_wgt);
     }
@@ -302,7 +303,7 @@ public:
 class MoveWidget : public Command{
     Point _pos;
 public:
-    MoveWidget(WidgetModel* wgt, Point pos) : Command(wgt), _pos(pos)  {};
+    MoveWidget(std::shared_ptr<WidgetModel> wgt, Point pos) : Command(wgt), _pos(pos)  {};
     virtual void call(Document* doc) override {
         _wgt->setPos(_pos);
         _wgt->notify(*_wgt, CHANGE_TYPE::MOVE);
@@ -318,7 +319,7 @@ class ResizeWidget : public Command{
     Size _sz;
     Size _prev_sz;
 public:
-    ResizeWidget(WidgetModel* wgt, Size sz) : Command(wgt), _sz(sz){};
+    ResizeWidget(std::shared_ptr<WidgetModel> wgt, Size sz) : Command(wgt), _sz(sz){};
     virtual void call(Document*) override {
         _prev_sz = _sz;
         _wgt->setSize(_sz);
@@ -334,7 +335,7 @@ class ChangeColorWidget : public Command{
     COLOR _col;
     COLOR _prev_col;
 public:
-    ChangeColorWidget(WidgetModel* wgt, COLOR col) : Command(wgt), _col(col) {};
+    ChangeColorWidget(std::shared_ptr<WidgetModel> wgt, COLOR col) : Command(wgt), _col(col) {};
     virtual void call(Document* doc) override {
         _wgt->notify(*_wgt, CHANGE_TYPE::COLOR);
     }
@@ -347,7 +348,7 @@ public:
 
 class RemoveWidget : public Command{
 public:
-    RemoveWidget(WidgetModel* wgt): Command(wgt) {};
+    RemoveWidget(std::shared_ptr<WidgetModel> wgt): Command(wgt) {};
     virtual void call(Document*) override {
 
     }
@@ -358,11 +359,29 @@ public:
 // ~Command
 
 
+class IConverter{
+public:
+    virtual void imprt(Document* ) = 0;
+    virtual void exprt(Document* ) = 0;
+};
+
+class JsonConverter : public IConverter{
+public:
+    void imprt(Document *document) override {
+        std::cout << "Import JSON Document" << std::endl;
+    }
+
+    void exprt(Document *document) override {
+        std::cout << "Export JSON Document" << std::endl;
+    }
+
+public:
+};
 
 ///////////////////////CONTROLLER///////////////////////////////////////////////////
 /* CREATE */
 class Editor{
-    Editor() {}
+    Editor() : _converter() {}
 public:
     Editor(const Editor&) = delete;
     void operator=(Editor&) = delete;
@@ -371,29 +390,47 @@ public:
         return ed;
     }
     Document* createDocument(const std::string& name) {
-        _docs.push_back(new Document(name));
-        return _docs.back();
+        _docs.push_back(Document(name));
+        return &_docs.back();
     }
 
-    void importDocument(Document*) {}
-    void exportDocument(Document*) {}
+    void setConverter(IConverter& converter){
+        _converter = &converter;
+    }
+
+    void importDocument(Document* doc) {
+        if(_converter == nullptr)
+            return;
+        _converter->imprt(doc);
+    }
+    void exportDocument(Document* doc) {
+        if(_converter == nullptr)
+            return;
+        _converter->exprt(doc);
+    }
 private:
-    std::vector<Document*> _docs;
+    std::vector<Document> _docs;
+    IConverter* _converter;
 };
 
 
 int main() {
     Editor& editor = Editor::getInstance();
+    auto converter = std::make_unique<JsonConverter>();
+    editor.setConverter(*converter);
     auto document = editor.createDocument("doc.ge");
-    auto widget = (new WidgetModel())->setColor(COLOR::RED)
+    std::shared_ptr<WidgetModel> widget = std::make_shared<WidgetModel>();
+    widget->setColor(COLOR::RED)
             ->setPos({10,10})
             ->setSize({10,10})
             ->setType(RECTANGLE);
-    document->addCommand(new CreateWidget(widget));
-    document->addCommand(new MoveWidget(widget, {.x = 10,.y = 10}));
-    document->addCommand(new ResizeWidget(widget, {.w = 10,.h = 10}));
-    document->addCommand(new ChangeColorWidget(widget, COLOR::RED));
-    document->addCommand(new RemoveWidget(widget));
+    document->addCommand(std::make_shared<CreateWidget>(widget));
+    document->addCommand(std::make_shared<MoveWidget>(widget, Point{.x = 2,.y = 2}));
+    document->addCommand(std::make_shared<ResizeWidget>(widget, Size{.w = 10,.h = 10}));
+    document->addCommand(std::make_shared<ChangeColorWidget>(widget, COLOR::RED));
+    document->addCommand(std::make_shared<RemoveWidget>(widget));
+    editor.importDocument(document);
+    editor.exportDocument(document);
 //    document->addCommand(new WidgetBuilder::(WIDGET_TYPE::TRIANGLE));
     return 0;
 }
