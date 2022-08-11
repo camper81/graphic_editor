@@ -83,6 +83,11 @@ Command <|.. MoveWidget
 Command <|.. ResizeWidget
 Command <|.. ChangeColorWidget
 
+
+```
+Класс View для отображения содержимого документа
+```mermaid
+classDiagram
 class View {
     -Size size
     -list<Widget> widgets
@@ -93,7 +98,7 @@ class View {
 }
 ```
 
-Иерархия виджет
+Структура классов widget
 
 ```mermaid
 classDiagram
