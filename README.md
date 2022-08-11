@@ -43,6 +43,7 @@ IDocument <|.. Document
 Иерархия команд
 
 ```mermaid
+classDiagram
 class Command {
     <<Interface>>
     -WidgetModel wgt
@@ -90,7 +91,12 @@ class View {
     +removeWidget(Widget)
     +redraw()
 }
+```
 
+Иерархия виджет
+
+```mermaid
+classDiagram
 class Widget {
     +move(Point)
     +resize(Size)
