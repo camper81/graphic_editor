@@ -38,7 +38,11 @@ class Document~IDocument~ {
 }
 
 IDocument <|.. Document
+```
 
+Иерархия команд
+
+```mermaid
 class Command {
     <<Interface>>
     -WidgetModel wgt
