@@ -41,7 +41,9 @@ class Command {
     +call(IDocument)
     +undo(IDocument)
 }
+```
 
+```mermaid
 class CreateWidget {
     -WidgetModel wgt
     +call(IDocument)
@@ -73,12 +75,16 @@ Command <|.. CreateWidget
 Command <|.. MoveWidget
 Command <|.. ResizeWidget
 Command <|.. ChangeColorWidget
+```
 
-class WidgetModel {
-    +setPos(Point)
-    +setSize(Size)
-    +setType(WIDGET_TYPE)
-    +setColor(COLOR)
+```mermaid
+class View {
+    -Size size
+    -list<Widget> widgets
+    +handle(WidgetModel, CHANGE_TYPE)
+    +addWidget(Widget)
+    +removeWidget(Widget)
+    +redraw()
 }
 
 class Widget {
@@ -99,6 +105,18 @@ class Observable {
     +removeObserver(Observer)
     +notify(Source, CHANGE_TYPE)
 }
+
+class WidgetModel {
+    +setPos(Point)
+    +setSize(Size)
+    +setType(WIDGET_TYPE)
+    +setColor(COLOR)
+}
+
+Observable <|.. WidgetModel
+
+Observer <|.. Widget
+Observer <|.. View
 
 Widget <|.. Circle  
 Widget <|.. Rectangle  
