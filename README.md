@@ -34,7 +34,7 @@ class Document {
     +addCommand(Command)
 }
 
-class IDocument ..|> Document
+IDocument ..|> Document
 
 class Command {
     -WidgetModel wgt
@@ -69,10 +69,10 @@ class ChangeColorWidget {
     +undo(IDocument)
 }
 
-class Command ..|> CreateWidget
-class Command ..|> MoveWidget
-class Command ..|> ResizeWidget
-class Command ..|> ChangeColorWidget
+Command ..|> CreateWidget
+Command ..|> MoveWidget
+Command ..|> ResizeWidget
+Command ..|> ChangeColorWidget
 
 class WidgetModel {
     +setPos(Point)
@@ -100,12 +100,12 @@ class Observable {
     +notify(Source, CHANGE_TYPE)
 }
 
-class Widget ..|> Circle
-class Widget ..|> Rectangle
-class Widget ..|> Square
-class Widget ..|> Triangle
-class Command ..|> MoveWidget
-class Command ..|> ResizeWidget
-class Command ..|> ChangeColorWidget
+Widget ..|> Circle
+Widget ..|> Rectangle
+Widget ..|> Square
+Widget ..|> Triangle
+Command ..|> MoveWidget
+Command ..|> ResizeWidget
+Command ..|> ChangeColorWidget
 
 ```
