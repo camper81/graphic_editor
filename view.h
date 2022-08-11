@@ -3,7 +3,7 @@
 
 class View : public Observer<WidgetModel> {
     Size _size;
-    std::list<Widget*> _widgets;
+    std::list<std::shared_ptr<Widget>> _widgets;
 public:
     void handle(WidgetModel& model, const CHANGE_TYPE &type) override {
         switch (type) {
@@ -12,10 +12,10 @@ public:
                 break;
         }
     }
-    void addWidget(Widget* wgt) {
+    void addWidget(std::shared_ptr<Widget> wgt) {
         _widgets.push_back(wgt);
     }
-    void removeWidget(Widget* wgt) {
+    void removeWidget(std::shared_ptr<Widget> wgt) {
         _widgets.erase(std::remove(_widgets.begin(), _widgets.end(), wgt), _widgets.end());
     }
     void redraw() const {

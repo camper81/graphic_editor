@@ -18,10 +18,79 @@ ____
 3. Избегать дублирования кода.
 ```mermaid
 classDiagram
-class Document {
-    +String path
-    +BigDecimal balance
-    +createShape(amount)
-    +withdrawl(amount)
+class IDocument {
+    +addWidget(ModelWidget)
+    +removeWidget(ModelWidget)
+    +addCommand(Command)
 }
+
+class Document {
+    -View view
+    -string name
+    -vector<WidgetModel> widgets
+    -vector<Command> commands
+    +addWidget(ModelWidget)
+    +removeWidget(ModelWidget)
+    +addCommand(Command)
+}
+
+class Command {
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class CreateWidget {
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class MoveWidget {
+    Point position
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class ResizeWidget {
+    Size size
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class ChangeColorWidget {
+    COLOR color
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class WidgetModel {
+    +setPos(Point)
+    +setSize(Size)
+    +setType(WIDGET_TYPE)
+    +setColor(COLOR)
+}
+
+class Widget {
+    +move(Point)
+    +resize(Size)
+    +changeColor(COLOR)
+    +handle(WidgetModel&, CHANGE_TYPE)
+    <<Interface>> +draw() 
+}
+
+class Observer {
+    +handle(Source, CHAGNE_TYPE)
+}
+
+class Observable {
+    -vector<Observer> obsrervers
+    +addObserver(Observer)
+    +removeObserver(Observer)
+    +notify(Source, CHANGE_TYPE)
+}
+
 ```

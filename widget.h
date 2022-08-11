@@ -26,7 +26,7 @@ public:
             wgt->move(offset_x, offset_y);
         }
     }
-    void move(Point& point) {
+    void move(const Point& point) {
         std::cout << "Move widget " << debug_widget_output[_model->_type] << std::endl;
         auto offset_x = point.x - _model->_pos.x;
         auto offset_y = point.x - _model->_pos.y;
@@ -42,7 +42,7 @@ public:
             wgt->move(offset_w, offset_h);
         }
     }
-    void resize(Size sz) {
+    void resize(const Size& sz) {
         std::cout << "Resize widget " << debug_widget_output[_model->_type] << std::endl;
         auto offset_w = sz.w - _model->_size.w;
         auto offset_h = sz.h - _model->_size.h;
@@ -107,16 +107,16 @@ public:
 
 class WidgetViewBuilder {
 public:
-    static Widget* create(WidgetModel* wgt,WIDGET_TYPE type) {
+    static std::shared_ptr<Widget> create(WidgetModel* wgt,WIDGET_TYPE type) {
         switch(type) {
             case WIDGET_TYPE::CIRCLE:
-                return new Circle(wgt);
+                return std::make_shared<Circle>(wgt);
             case WIDGET_TYPE::RECTANGLE:
-                return new Rectangle(wgt);
+                return std::make_shared<Rectangle>(wgt);
             case WIDGET_TYPE::SQUARE:
-                return new Square(wgt);
+                return std::make_shared<Square>(wgt);
             case WIDGET_TYPE::TRIANGLE:
-                return new Triangle(wgt);
+                return std::make_shared<Triangle>(wgt);
         }
         return nullptr;
     }
