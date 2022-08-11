@@ -21,12 +21,13 @@ ____
 ```mermaid
 classDiagram
 class IDocument {
-    +addWidget(ModelWidget)
-    +removeWidget(ModelWidget)
-    +addCommand(Command)
+    <<Interface>>
+    *addWidget(ModelWidget)
+    *removeWidget(ModelWidget)
+    *addCommand(Command)
 }
 
-class Document {
+class Document~IDocument~ {
     -View view
     -string name
     -vector<WidgetModel> widgets
@@ -39,34 +40,33 @@ class Document {
 IDocument <|.. Document
 
 class Command {
+    <<Interface>>
+    -WidgetModel wgt
+    *call(IDocument)
+    *undo(IDocument)
+}
+
+class CreateWidget~Command~ {
     -WidgetModel wgt
     +call(IDocument)
     +undo(IDocument)
 }
-```
 
-```mermaid
-class CreateWidget {
-    -WidgetModel wgt
-    +call(IDocument)
-    +undo(IDocument)
-}
-
-class MoveWidget {
+class MoveWidget~Command~ {
     Point position
     -WidgetModel wgt
     +call(IDocument)
     +undo(IDocument)
 }
 
-class ResizeWidget {
+class ResizeWidget~Command~ {
     Size size
     -WidgetModel wgt
     +call(IDocument)
     +undo(IDocument)
 }
 
-class ChangeColorWidget {
+class ChangeColorWidget~Command~ {
     COLOR color
     -WidgetModel wgt
     +call(IDocument)
@@ -77,9 +77,7 @@ Command <|.. CreateWidget
 Command <|.. MoveWidget
 Command <|.. ResizeWidget
 Command <|.. ChangeColorWidget
-```
 
-```mermaid
 class View {
     -Size size
     -list<Widget> widgets
@@ -94,7 +92,7 @@ class Widget {
     +resize(Size)
     +changeColor(COLOR)
     +handle(WidgetModel&, CHANGE_TYPE)
-    <<Interface>> +draw() 
+    *draw() 
 }
 
 class Observer {
