@@ -16,12 +16,126 @@ ____
 2. Помнить про принцип единственности ответственности, разделить код на логические
 модули (классы, функции).
 3. Избегать дублирования кода.
+
+Структура классов Document
 ```mermaid
 classDiagram
-class Document {
-    +String path
-    +BigDecimal balance
-    +createShape(amount)
-    +withdrawl(amount)
+class IDocument {
+    <<Interface>>
+    *addWidget(ModelWidget)
+    *removeWidget(ModelWidget)
+    *addCommand(Command)
 }
+
+class Document~IDocument~ {
+    -View view
+    -string name
+    -vector<WidgetModel> widgets
+    -vector<Command> commands
+    +addWidget(ModelWidget)
+    +removeWidget(ModelWidget)
+    +addCommand(Command)
+}
+
+IDocument <|.. Document
+```
+
+Иерархия команд
+
+```mermaid
+classDiagram
+class Command {
+    <<Interface>>
+    -WidgetModel wgt
+    *call(IDocument)
+    *undo(IDocument)
+}
+
+class CreateWidget~Command~ {
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class MoveWidget~Command~ {
+    Point position
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class ResizeWidget~Command~ {
+    Size size
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+class ChangeColorWidget~Command~ {
+    COLOR color
+    -WidgetModel wgt
+    +call(IDocument)
+    +undo(IDocument)
+}
+
+Command <|.. CreateWidget
+Command <|.. MoveWidget
+Command <|.. ResizeWidget
+Command <|.. ChangeColorWidget
+
+
+```
+Класс View для отображения содержимого документа
+```mermaid
+classDiagram
+class View {
+    -Size size
+    -list<Widget> widgets
+    +handle(WidgetModel, CHANGE_TYPE)
+    +addWidget(Widget)
+    +removeWidget(Widget)
+    +redraw()
+}
+```
+
+Структура классов widget
+
+```mermaid
+classDiagram
+class Widget {
+    +move(Point)
+    +resize(Size)
+    +changeColor(COLOR)
+    +handle(WidgetModel&, CHANGE_TYPE)
+    *draw() 
+}
+
+class Observer {
+    +handle(Source, CHAGNE_TYPE)
+}
+
+class Observable {
+    -vector<Observer> obsrervers
+    +addObserver(Observer)
+    +removeObserver(Observer)
+    +notify(Source, CHANGE_TYPE)
+}
+
+class WidgetModel {
+    +setPos(Point)
+    +setSize(Size)
+    +setType(WIDGET_TYPE)
+    +setColor(COLOR)
+}
+
+Observable <|.. WidgetModel
+
+Observer <|.. Widget
+Observer <|.. View
+
+Widget <|.. Circle  
+Widget <|.. Rectangle  
+Widget <|.. Square  
+Widget <|.. Triangle  
+
 ```
